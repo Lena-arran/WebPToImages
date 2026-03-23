@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebP Converter</title>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="box">
+        <h2>WebP画像変換ツール</h2>
+        <input type="file" id="upload" accept="image/webp">
+
+        <div class="select">
+            <p>形式：</p>
+            <select id="format">
+                <option value="image/jpeg">JPG</option>
+                <option value="image/png">PNG</option>
+            </select>
+        </div>
+
+        <button id="convert" class="cvt_btn">変換する</button>
+        <a id="download" class="dl_btn">ダウンロード</a>
+    </div>
+<script src="js/main.js"></script>
+</body>
+</html>

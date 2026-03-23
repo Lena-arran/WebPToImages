@@ -1,0 +1,12 @@
+# mac
+.DS_Store
+
+# node系（今後使う可能性あるので）
+node_modules/
+
+# build系（将来用）
+dist/
+build/
+
+# 環境ファイル
+.env

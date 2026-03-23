@@ -1,0 +1,46 @@
+body {
+    font-family: sans-serif;
+    max-width: 400px;
+    margin: 50px auto;
+    text-align: center;
+}
+
+.box {
+    border: 1px solid #ccc;
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.select {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cvt_btn {
+    margin-top: 10px;
+    padding: 10px;
+    width: 100%;
+    cursor: pointer;
+    background: #df4f62;
+    color: #fff;
+    font-weight: bold;
+    border: none;
+    border-radius: 30px;
+    font-size: 15px;
+}
+.dl_btn {
+    display: none;
+    width: 100%;
+    cursor: pointer;
+    background: #df654f;
+    color: #fff;
+    font-weight: bold;
+    border: none;
+    border-radius: 30px;
+    font-size: 15px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    text-decoration: none;
+}

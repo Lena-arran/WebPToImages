@@ -1,4 +1,6 @@
-//右クリックメニュー作成
+let lastSrc = "";
+
+// 右クリックメニュー
 chrome.runtime.onInstalled.addListener(() => {
     chrome.contextMenus.create({
         id: "to-jpg",
@@ -9,52 +11,46 @@ chrome.runtime.onInstalled.addListener(() => {
         id: "to-png",
         title: "PNGで保存",
         contexts: ["image"]
-    });  
+    });
 });
 
-// クリックイベント
-chrome.contextMenus.onClicked.addListener(async (info)=> {
+// contentからURL受け取る
+chrome.runtime.onMessage.addListener((msg, sender) => {
+    if (msg.type === "IMAGE_INFO") {
+        lastSrc = msg.src;
+    }
 
-    const type = info.menuItemId === "to-png" ? "image/png" : "image/jpeg";
-
-    const response = await fetch(info.srcUrl);
-    const blob = await response.blob();
-    
-    convertImage(blob, type, info.srcUrl);
-});
-
-
-// 変換処理
-function convertImage(file, type, srcUrl) {
-    const img = new Image();
-    img.src = URL.createObjectURL(file);
-
-    img.onload = async () => {
-        const canvas = new OffscreenCanvas(img.width, img.height);
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0);
-
-        const convertedBlob = await canvas.convertToBlob({type});
-        const url = URL.createObjectURL(convertedBlob);
-        
-        const filename = getFileName(srcUrl, type);
-        
+    if (msg.type === "DOWNLOAD") {
         chrome.downloads.download({
-            url: url,
-            filename: filename
+            url: msg.url,
+            filename: msg.filename || "image.png"
         });
-    };
-}
+    }
+});
 
-// ファイル名取得
+// クリック時
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+    const type = info.menuItemId === "to-png"
+        ? "image/png"
+        : "image/jpeg";
+
+    const filename = getFileName(lastSrc || info.srcUrl, type);
+
+    chrome.tabs.sendMessage(tab.id, {
+        type: "CONVERT_IMAGE",
+        format: type,
+        filename: filename
+    });
+});
+
+// ファイル名
 function getFileName(url, type) {
-    const urlObj = new URL(url);
-
-    // パスの最後を取得し、拡張子削除
-    let fileName = urlObj.pathname.split("/").pop();
-    const nameWithoutExt = fileName.replace(/\.[^/.]+$/, "");
-
-    // 新しい拡張子
-    const ext = type.split("/")[1];
-    return nameWithoutExt + "." + ext;
+    try {
+        const urlObj = new URL(url);
+        let name = urlObj.pathname.split("/").pop() || "image";
+        name = name.replace(/\.[^/.]+$/, "");
+        return name + "." + type.split("/")[1];
+    } catch {
+        return "image." + type.split("/")[1];
+    }
 }

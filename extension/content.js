@@ -70,15 +70,6 @@ chrome.runtime.onMessage.addListener(async (msg) => {
 
         console.log("生成ファイル名:", filename);
 
-        // =======================
-        // backgroundへ送信
-        // =======================
-        chrome.runtime.sendMessage({
-            type: "DOWNLOAD",
-            url: dataUrl,
-            filename: filename
-        });
-
     } catch (e) {
         console.error("変換エラー", e);
     }

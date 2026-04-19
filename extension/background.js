@@ -18,7 +18,7 @@ chrome.runtime.onInstalled.addListener(() => {
 // =======================
 // クリック → contentに命令
 // =======================
-chrome.contextMenus.onClicked.addListener((info, tab) => {
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     if (!tab?.id) return;
 
     const format =
@@ -27,11 +27,6 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
             : "image/jpeg";
 
     try {
-        await chrome.scripting.executeScript({
-            target: { tabId: tab.id },
-            files: ["content.js"]
-        });
-
         chrome.tabs.sendMessage(tab.id, {
             type: "CONVERT_IMAGE",
             format: format
@@ -52,7 +47,7 @@ chrome.runtime.onMessage.addListener((msg) => {
     chrome.downloads.download({
         url: msg.url,
         filename: msg.filename,
-        saveAs: true, // ← 安定運用
+        saveAs: true,
         conflictAction: "uniquify"
     }, () => {
         if (chrome.runtime.lastError) {

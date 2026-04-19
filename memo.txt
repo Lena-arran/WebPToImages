@@ -1,0 +1,25 @@
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+    if (!tab?.id) return;
+
+    const format =
+        info.menuItemId === "to-png"
+            ? "image/png"
+            : "image/jpeg";
+
+    try {
+        // ★ content.js を強制注入
+        await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            files: ["content.js"]
+        });
+
+        // ★ その後メッセージ送信
+        chrome.tabs.sendMessage(tab.id, {
+            type: "CONVERT_IMAGE",
+            format: format
+        });
+
+    } catch (e) {
+        console.error("スクリプト注入失敗", e);
+    }
+});

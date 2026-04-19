@@ -1,12 +1,13 @@
-let lastSrc = "";
-
-// 右クリックメニュー
+// =======================
+// 初期化（右クリックメニュー）
+// =======================
 chrome.runtime.onInstalled.addListener(() => {
     chrome.contextMenus.create({
         id: "to-jpg",
         title: "JPGで保存",
         contexts: ["image"]
     });
+
     chrome.contextMenus.create({
         id: "to-png",
         title: "PNGで保存",
@@ -14,43 +15,48 @@ chrome.runtime.onInstalled.addListener(() => {
     });
 });
 
-// contentからURL受け取る
-chrome.runtime.onMessage.addListener((msg, sender) => {
-    if (msg.type === "IMAGE_INFO") {
-        lastSrc = msg.src;
-    }
+// =======================
+// クリック → contentに命令
+// =======================
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+    if (!tab?.id) return;
 
-    if (msg.type === "DOWNLOAD") {
-        chrome.downloads.download({
-            url: msg.url,
-            filename: msg.filename || "image.png"
+    const format =
+        info.menuItemId === "to-png"
+            ? "image/png"
+            : "image/jpeg";
+
+    try {
+        await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            files: ["content.js"]
         });
+
+        chrome.tabs.sendMessage(tab.id, {
+            type: "CONVERT_IMAGE",
+            format: format
+        });
+    } catch(e) {
+        console.error("スクリプト注入失敗", e);
     }
 });
 
-// クリック時
-chrome.contextMenus.onClicked.addListener((info, tab) => {
-    const type = info.menuItemId === "to-png"
-        ? "image/png"
-        : "image/jpeg";
+// =======================
+// ダウンロード実行
+// =======================
+chrome.runtime.onMessage.addListener((msg) => {
+    if (msg.type !== "DOWNLOAD") return;
 
-    const filename = getFileName(lastSrc || info.srcUrl, type);
+    console.log("保存ファイル名:", msg.filename);
 
-    chrome.tabs.sendMessage(tab.id, {
-        type: "CONVERT_IMAGE",
-        format: type,
-        filename: filename
+    chrome.downloads.download({
+        url: msg.url,
+        filename: msg.filename,
+        saveAs: true, // ← 安定運用
+        conflictAction: "uniquify"
+    }, () => {
+        if (chrome.runtime.lastError) {
+            console.error("DL失敗", chrome.runtime.lastError);
+        }
     });
 });
-
-// ファイル名
-function getFileName(url, type) {
-    try {
-        const urlObj = new URL(url);
-        let name = urlObj.pathname.split("/").pop() || "image";
-        name = name.replace(/\.[^/.]+$/, "");
-        return name + "." + type.split("/")[1];
-    } catch {
-        return "image." + type.split("/")[1];
-    }
-}

@@ -1,16 +1,36 @@
 {
   "manifest_version": 3,
-  "name": "Image Converter",
+  "name": "Image to JPG/PNG Converter",
   "version": "1.0",
-  "permissions": ["contextMenus", "downloads", "scripting"],
-  "host_permissions": ["<all_urls>"],
+  "permissions": [
+    "contextMenus",
+    "downloads",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "background": {
     "service_worker": "background.js"
   },
+  "icons": {
+    "16": "icons/converter-icon_16.png",
+    "48": "icons/converter-icon_48.png",
+    "128": "icons/converter-icon_128.png"
+  },
+  "action": {
+    "default_title": "Image to JPG/PNG Converter",
+    "default_icon": "icons/converter-icon_48.png",
+    "default_popup": "popup.html"
+  },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["content.js"]
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ]
     }
   ]
 }

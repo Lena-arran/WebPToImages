@@ -1,21 +1,31 @@
 // =======================
-// 右クリックされた画像を保持
+// 状態管理
 // =======================
 let lastClickedImg = null;
+let isProcessing = false;
 
+// =======================
+// 右クリックで対象画像を保持
+// =======================
 document.addEventListener("contextmenu", (e) => {
     const el = e.target.closest("img");
-    if (el) {
+    if(el) {
         lastClickedImg = el;
     }
 });
 
 // =======================
-// 命令受信 → 変換処理
+// メッセージ受信
 // =======================
 chrome.runtime.onMessage.addListener(async (msg) => {
 
     if (msg.type !== "CONVERT_IMAGE") return;
+
+    if(isProcessing) {
+        console.log("処理中のためスキップ");
+        return;
+    }
+    isProcessing = true;
 
     try {
         const img = lastClickedImg;
@@ -29,52 +39,107 @@ chrome.runtime.onMessage.addListener(async (msg) => {
         // 画像URL取得
         // =======================
         const src = img.currentSrc || img.src;
-
         console.log("画像URL:", src);
 
-        // =======================
-        // 画像データ取得
-        // =======================
-        const response = await fetch(src);
-        const blob = await response.blob();
-
-        const bitmap = await createImageBitmap(blob);
-
-        // =======================
-        // canvas変換
-        // =======================
-        const canvas = document.createElement("canvas");
-        canvas.width = bitmap.width;
-        canvas.height = bitmap.height;
-
-        const ctx = canvas.getContext("2d");
-        if (!ctx) throw new Error("ctx取得失敗");
-
-        ctx.drawImage(bitmap, 0, 0);
-
-        // =======================
-        // dataURLに変換
-        // =======================
-        const dataUrl = canvas.toDataURL(msg.format, 0.95);
-
-        // =======================
-        // ファイル名生成
-        // =======================
         const filename = buildFileName(src, msg.format);
 
-        chrome.runtime.sendMessage({
-            type: "DOWNLOAD",
-            url: dataUrl,
-            filename
-        });
+        // =======================
+        // ① 同形式なら変換しない（劣化防止）
+        // =======================
+        const originalExt = getExtension(src);
+        const targetExt = msg.format === "image/png" ? "png" : "jpg";
 
-        console.log("生成ファイル名:", filename);
+        if(originalExt === targetExt) {
+            chrome.runtime.sendMessage({
+                type: "DOWNLOAD",
+                url: src,
+                filename
+            });
+            return;
+        }
+
+        // =======================
+        // ② DOM描画（最優先・安定）
+        // =======================
+        try {
+            const canvas = document.createElement("canvas");
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+
+            const ctx = canvas.getContext("2d");
+            if (!ctx) throw new Error("ctx取得失敗");
+    
+            ctx.drawImage(img, 0, 0);
+            
+            const dataUrl = canvas.toDataURL(msg.format, 0.95);
+            chrome.runtime.sendMessage({
+                type: "DOWNLOAD",
+                url: dataUrl,
+                filename
+            });
+
+            return;
+        } catch (e) {
+            console.warn("DOM描画失敗 → fetchへ", e);
+        }
+
+        // =======================
+        // ③ fetch fallback
+        // =======================
+        try {
+            const response = await fetch(src, {cache: "no-store"});
+            const blob = await response.blob();
+
+            const bitmap = await createImageBitmap(blob);
+
+            const canvas = document.createElement("canvas");
+            canvas.width = bitmap.width;
+            canvas.height = bitmap.height;
+
+            const ctx = canvas.getContext("2d");
+            if (!ctx) throw new Error("ctx取得失敗");
+
+            ctx.drawImage(bitmap, 0, 0);
+
+            const dataUrl = canvas.toDataURL(msg.format, 0.98);
+
+            chrome.runtime.sendMessage({
+                type: "DOWNLOAD",
+                url: dataUrl,
+                filename
+            });
+        } catch(e) {
+            console.warn("fetch失敗 → 直接DL", e);
+
+            // =======================
+            // ④ 最終手段
+            // =======================
+            chrome.runtime.sendMessage({
+                type: "DOWNLOAD",
+                url: src,
+                filename
+            });
+        }
 
     } catch (e) {
         console.error("変換エラー", e);
+    } finally {
+        isProcessing = false;
     }
 });
 
+// =======================
+// 拡張子取得
+// =======================
+function getExtension(url) {
+    try {
+        const pathname = new URL(url).pathname;
+        return pathname.split(".").pop().toLowerCase();
+    } catch {
+        return "";
+    }
+}
+ 
 // =======================
 // ファイル名生成
 // =======================

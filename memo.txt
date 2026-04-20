@@ -1,25 +1,165 @@
-chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-    if (!tab?.id) return;
+// =======================
+// 状態管理
+// =======================
+let lastClickedImg = null;
+let isProcessing = false;
 
-    const format =
-        info.menuItemId === "to-png"
-            ? "image/png"
-            : "image/jpeg";
-
-    try {
-        // ★ content.js を強制注入
-        await chrome.scripting.executeScript({
-            target: { tabId: tab.id },
-            files: ["content.js"]
-        });
-
-        // ★ その後メッセージ送信
-        chrome.tabs.sendMessage(tab.id, {
-            type: "CONVERT_IMAGE",
-            format: format
-        });
-
-    } catch (e) {
-        console.error("スクリプト注入失敗", e);
+// =======================
+// 右クリックで対象画像を保持
+// =======================
+document.addEventListener("contextmenu", (e) => {
+    const el = e.target.closest("img");
+    if (el) {
+        lastClickedImg = el;
     }
 });
+
+// =======================
+// メッセージ受信
+// =======================
+chrome.runtime.onMessage.addListener(async (msg) => {
+
+    if (msg.type !== "CONVERT_IMAGE") return;
+
+    if (isProcessing) {
+        console.warn("処理中のためスキップ");
+        return;
+    }
+
+    isProcessing = true;
+
+    try {
+        const img = lastClickedImg;
+
+        if (!img) {
+            console.warn("画像が選択されていません");
+            return;
+        }
+
+        const src = img.currentSrc || img.src;
+        console.log("画像URL:", src);
+
+        const filename = buildFileName(src, msg.format);
+
+        // =======================
+        // ① 同形式なら変換しない（劣化防止）
+        // =======================
+        const originalExt = getExtension(src);
+        const targetExt = msg.format === "image/png" ? "png" : "jpg";
+
+        if (originalExt === targetExt) {
+            chrome.runtime.sendMessage({
+                type: "DOWNLOAD",
+                url: src,
+                filename
+            });
+            return;
+        }
+
+        // =======================
+        // ② DOM描画（最優先・安定）
+        // =======================
+        try {
+            const canvas = document.createElement("canvas");
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+
+            const ctx = canvas.getContext("2d");
+            if (!ctx) throw new Error("ctx取得失敗");
+
+            ctx.drawImage(img, 0, 0);
+
+            const dataUrl = canvas.toDataURL(msg.format, 0.98);
+
+            chrome.runtime.sendMessage({
+                type: "DOWNLOAD",
+                url: dataUrl,
+                filename
+            });
+
+            return;
+        } catch (e) {
+            console.warn("DOM描画失敗 → fetchへ", e);
+        }
+
+        // =======================
+        // ③ fetch fallback
+        // =======================
+        try {
+            const response = await fetch(src, { cache: "no-store" });
+            const blob = await response.blob();
+
+            const bitmap = await createImageBitmap(blob);
+
+            const canvas = document.createElement("canvas");
+            canvas.width = bitmap.width;
+            canvas.height = bitmap.height;
+
+            const ctx = canvas.getContext("2d");
+            if (!ctx) throw new Error("ctx取得失敗");
+
+            ctx.drawImage(bitmap, 0, 0);
+
+            const dataUrl = canvas.toDataURL(msg.format, 0.98);
+
+            chrome.runtime.sendMessage({
+                type: "DOWNLOAD",
+                url: dataUrl,
+                filename
+            });
+
+        } catch (e) {
+            console.warn("fetch失敗 → 直接DL", e);
+
+            // =======================
+            // ④ 最終手段
+            // =======================
+            chrome.runtime.sendMessage({
+                type: "DOWNLOAD",
+                url: src,
+                filename
+            });
+        }
+
+    } catch (e) {
+        console.error("変換エラー", e);
+    } finally {
+        isProcessing = false;
+    }
+});
+
+// =======================
+// 拡張子取得
+// =======================
+function getExtension(url) {
+    try {
+        const pathname = new URL(url).pathname;
+        return pathname.split(".").pop().toLowerCase();
+    } catch {
+        return "";
+    }
+}
+
+// =======================
+// ファイル名生成
+// =======================
+function buildFileName(url, format) {
+    try {
+        const u = new URL(url);
+
+        let name = u.pathname.split("/").pop() || "";
+
+        if (!name || !name.includes(".")) {
+            name = "image_" + Date.now();
+        } else {
+            name = name.replace(/\.[^/.]+$/, "");
+        }
+
+        const ext = format === "image/png" ? "png" : "jpg";
+
+        return `${name}.${ext}`;
+
+    } catch {
+        return `image_${Date.now()}.${format.split("/")[1]}`;
+    }
+}

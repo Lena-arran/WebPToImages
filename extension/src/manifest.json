@@ -1,17 +1,18 @@
 {
   "manifest_version": 3,
   "name": "Image to JPG/PNG Converter",
-  "version": "1.0",
+  "version": "2.0",
   "permissions": [
     "contextMenus",
     "downloads",
-    "scripting"
+    "activeTab"
   ],
   "host_permissions": [
     "<all_urls>"
   ],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background/background.js",
+    "type": "module"
   },
   "icons": {
     "16": "icons/converter-icon_16.png",
@@ -29,7 +30,7 @@
         "<all_urls>"
       ],
       "js": [
-        "content.js"
+        "content/content.js"
       ]
     }
   ]

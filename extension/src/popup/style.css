@@ -1,0 +1,162 @@
+@charset "UTF-8";
+
+/* 全体設定 */
+body {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+section p {
+    font-size: 0.95em;
+    color: #424242;
+    margin: 8px auto;
+}
+
+section h2 {
+    font-size: 15px;
+    font-weight: 800;
+    display: inline-block;
+    margin: 0;
+}
+
+.popup {
+    border-radius: 10px;
+    box-shadow: rgba(14, 30, 37, 0.12) 0px 2px 4px 0px, rgba(14, 30, 37, 0.32) 0px 2px 16px 0px;
+    width: 350px;
+    padding: 14px 20px;
+}
+
+.filename-section,
+.quality-section {
+    border-bottom: solid 1px #e9e9e9;
+    padding: 13px 0;
+}
+
+/* ヘッダー */
+.popup-header {
+    display: flex;
+    align-items: center;
+    border-bottom: solid 1px #e9e9e9;
+}
+
+.top_icon {
+    width: 15%;
+}
+
+.top_icon img {
+    border-radius: 10px;
+    width: 80%;
+    height: auto;
+}
+
+.top_text {
+    width: 75%;
+}
+
+.top_text h1 {
+    font-size: 22px;
+    margin: 6px 0;
+}
+
+.top_text p {
+    font-size: 14px;
+    margin: 0 0 14px 0;
+}
+
+/* ファイル名入力 */
+.filename-section h2 {
+    margin: 4px 0 10px 0;
+}
+
+.quality_top {
+    display: flex;
+    align-items: center;
+    padding-bottom: 10px;
+}
+
+.badge {
+    background: #efe8ff;
+    padding: 3px 5px;
+    border-radius: 5px;
+    color: #4c00ff;
+    font-size: 11px;
+    border: solid 1px #e7dcff;
+    margin-left: 10px;
+}
+
+.text-input {
+    border: solid 1px #4c00ff;
+    border-radius: 5px;
+    padding: 8px 3%;
+    width: 94%;
+}
+
+/* 保存ボタン */
+.save-btn {
+    background-color: #4c00ff;
+    color: #fff;
+    border: none;
+    width: 100%;
+    border-radius: 5px;
+    padding: 8px;
+    font-size: 16px;
+    margin: 8px auto;
+    cursor: pointer;
+}
+
+/* スライダー */
+.quality-control {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.range-control {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 80%;
+    background: transparent;
+    cursor: pointer;
+    height: 5px;
+    border-radius: 999px;
+}
+
+/* --- Webkit Browsers --- */
+.range-control::-webkit-slider-runnable-track {
+    height: 5px;
+    border-radius: 999px;
+    border: 0px solid #cbd5e1;
+    box-shadow: 0px 2px 0px rgba(0, 0, 0, 0.1);
+}
+
+.range-control::-moz-range-track {
+    height: 5px;
+    border-radius: 999px;
+    border: 0px solid #cbd5e1;
+    box-shadow: 0px 2px 0px rgba(0, 0, 0, 0.1);
+}
+
+.range-control::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 20px;
+    width: 20px;
+    background: #fff;
+    border-radius: 30px;
+    border: 1px solid #dfdee9;
+    margin-top: -7px;
+    box-shadow: 0px 2px 0px rgba(0, 0, 0, 0.1);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.range-control:hover::-webkit-slider-thumb {
+    transform: scale(1.05);
+}
+
+.state-box {
+    background: #f0f0f0;
+    border-radius: 5px;
+    padding: 8px;
+    color: #454545;
+    border: solid 1px #dddddd;
+    font-size: 0.9em;
+}

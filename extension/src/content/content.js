@@ -72,23 +72,20 @@ async function handleConvertMessage(msg) {
 
         console.log("画像URL:", src);
 
-        const filename =
-            buildFileName(
-                src,
-                msg.format
-            );
-
         // =======================
         // 同形式なら直接DL
         // =======================
 
-        const originalExt =
-            getExtension(src);
+        const originalExt = getExtension(src);
 
         const targetExt =
             msg.format === "image/png"
                 ? "png"
                 : "jpg";
+
+        const settings = await getSettings();
+
+        const filename = settings.filename ? `${settings.filename}.${targetExt}` : buildFileName(src, msg.format);
 
         if (originalExt === targetExt) {
 
@@ -133,18 +130,19 @@ async function handleConvertMessage(msg) {
 
             ctx.drawImage(img, 0, 0);
 
+            console.log(settings);
+
             const dataUrl =
                 canvas.toDataURL(
                     msg.format,
-                    0.95
+
+                    msg.format === "image/jpeg" ? settings.quality : undefined
                 );
 
+                console.log(filename);
             chrome.runtime.sendMessage({
-
                 type: "DOWNLOAD",
-
                 url: dataUrl,
-
                 filename
             });
 
@@ -207,17 +205,10 @@ async function handleConvertMessage(msg) {
             const dataUrl =
                 canvas.toDataURL(
                     msg.format,
-                    0.98
+                    msg.format === "image/jpeg"
+                        ? settings.quality
+                        : undefined
                 );
-
-            chrome.runtime.sendMessage({
-
-                type: "DOWNLOAD",
-
-                url: dataUrl,
-
-                filename
-            });
 
         } catch (e) {
 
@@ -318,10 +309,23 @@ function buildFileName(
 
     } catch {
 
-        return `image_${
-            Date.now()
-        }.${
-            format.split("/")[1]
-        }`;
+        return `image_${Date.now()
+            }.${format.split("/")[1]
+            }`;
     }
+}
+
+// =======================
+// ファイル名・JPG品質設定取得
+// =======================
+async function getSettings() {
+    const result = await chrome.storage.sync.get([
+        "filename",
+        "quality"
+    ]);
+
+    return {
+        filename: result.filename ?? "",
+        quality: (result.quality ?? 99) /100
+    };
 }

@@ -3,17 +3,22 @@
 // =======================
 export function setupMenus() {
     chrome.runtime.onInstalled.addListener(() => {
-        chrome.contextMenus.create({
-            id: "to-jpg",
-            title: "JPGで保存",
-            contexts: ["image"]
-        });
 
-        chrome.contextMenus.create({
-            id: "to-png",
-            title: "PNGで保存",
-            contexts: ["image"]
+        chrome.contextMenus.removeAll(() => {
+            chrome.contextMenus.create({
+                id: "to-jpg",
+                title: "JPGで保存",
+                contexts: ["image"]
+            });
+    
+            chrome.contextMenus.create({
+                id: "to-png",
+                title: "PNGで保存",
+                contexts: ["image"]
+            });
+            
         });
+        
     });
 
     // =======================

@@ -85,7 +85,7 @@ async function handleConvertMessage(msg) {
 
         const settings = await getSettings();
 
-        const filename = settings.filename ? `${settings.filename}.${targetExt}` : buildFileName(src, msg.format);
+        const filename = buildFileName(src, msg.format);
 
         if (originalExt === targetExt) {
 
@@ -107,22 +107,15 @@ async function handleConvertMessage(msg) {
 
         try {
 
-            const canvas =
-                document.createElement(
-                    "canvas"
-                );
+            const canvas = document.createElement("canvas");
 
-            canvas.width =
-                img.naturalWidth;
+            canvas.width = img.naturalWidth;
 
-            canvas.height =
-                img.naturalHeight;
+            canvas.height = img.naturalHeight;
 
-            const ctx =
-                canvas.getContext("2d");
+            const ctx = canvas.getContext("2d");
 
             if (!ctx) {
-
                 throw new Error(
                     "ctx取得失敗"
                 );
@@ -135,11 +128,9 @@ async function handleConvertMessage(msg) {
             const dataUrl =
                 canvas.toDataURL(
                     msg.format,
-
                     msg.format === "image/jpeg" ? settings.quality : undefined
                 );
 
-                console.log(filename);
             chrome.runtime.sendMessage({
                 type: "DOWNLOAD",
                 url: dataUrl,
@@ -167,30 +158,19 @@ async function handleConvertMessage(msg) {
                     cache: "no-store"
                 });
 
-            const blob =
-                await response.blob();
+            const blob = await response.blob();
 
-            const bitmap =
-                await createImageBitmap(
-                    blob
-                );
+            const bitmap = await createImageBitmap(blob);
 
-            const canvas =
-                document.createElement(
-                    "canvas"
-                );
+            const canvas = document.createElement("canvas");
 
-            canvas.width =
-                bitmap.width;
+            canvas.width = bitmap.width;
 
-            canvas.height =
-                bitmap.height;
+            canvas.height = bitmap.height;
 
-            const ctx =
-                canvas.getContext("2d");
+            const ctx = canvas.getContext("2d");
 
             if (!ctx) {
-
                 throw new Error(
                     "ctx取得失敗"
                 );
@@ -209,6 +189,11 @@ async function handleConvertMessage(msg) {
                         ? settings.quality
                         : undefined
                 );
+            chrome.runtime.sendMessage({
+                type: "DOWNLOAD",
+                url: dataUrl,
+                filename
+            });
 
         } catch (e) {
 
@@ -218,7 +203,6 @@ async function handleConvertMessage(msg) {
             );
 
             chrome.runtime.sendMessage({
-
                 type: "DOWNLOAD",
 
                 url: src,
@@ -235,7 +219,6 @@ async function handleConvertMessage(msg) {
         );
 
     } finally {
-
         isProcessing = false;
     }
 }
@@ -246,7 +229,6 @@ async function handleConvertMessage(msg) {
 // =======================
 
 function getExtension(url) {
-
     try {
 
         const pathname =
@@ -320,12 +302,10 @@ function buildFileName(
 // =======================
 async function getSettings() {
     const result = await chrome.storage.sync.get([
-        "filename",
         "quality"
     ]);
 
     return {
-        filename: result.filename ?? "",
-        quality: (result.quality ?? 99) /100
+        quality: (result.quality ?? 100) /100
     };
 }

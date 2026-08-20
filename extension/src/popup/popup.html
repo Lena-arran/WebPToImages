@@ -15,14 +15,14 @@
             </div>
             <div class="top_text">
                 <h1>Image to JPG/PNG Converter</h1>
-                <p>あらゆる画像をJPG/PNGに変換します💡</p>
+                <p>あらゆる画像をJPG/PNGに変換します</p>
             </div>
         </header>
-        <section class="filename-section">
+        <!-- <section class="filename-section">
             <h2>ダウンロードファイル名</h2>
             <input type="text" id="filename" value="image-converted" class="text-input">
             <p>ファイル名を固定設定したい際にご利用ください</p>
-        </section>
+        </section> -->
         <section class="quality-section">
             <div class="quality_top">
                 <h2>JPG画質（圧縮率）</h2>
@@ -30,13 +30,13 @@
             </div>
             <div class="quality-control">
                 <input type="range" class="range-control" min="0" max="100" value="100" id="qualityRange">
-                <span class="" id="qualityValue">90%</span>
+                <span class="" id="qualityValue">100%</span>
             </div>
             <p>数値が高いほど高画質になります<br>（ファイルサイズも大きくなります）</p>
         </section>
         <button class="save-btn" id="save">設定を保存</button>
         <section class="state-section">
-            <div class="state-box" id="statusMessage">ステータス表示</div>
+            <div class="state-box" id="statusMessage">ステータス</div>
         </section>
     </main>
 <script src="popup.js"></script>

@@ -1,3 +1,5 @@
+import { showErrorNotification } from "./notification.js";
+
 // =======================
 // 初期化（右クリックメニュー）
 // =======================
@@ -32,13 +34,20 @@ export function setupMenus() {
                 ? "image/png"
                 : "image/jpeg";
 
-        try {
-            chrome.tabs.sendMessage(tab.id, {
+        chrome.tabs.sendMessage(
+            tab.id,{
                 type: "CONVERT_IMAGE",
-                format: format
-            });
-        } catch (e) {
-            console.error("スクリプト注入失敗", e);
-        }
+                format: format                
+            },
+            () => {
+                if (chrome.runtime.lastError) {
+                    console.warn(
+                        "content.jsへ接続できません:",
+                        chrome.runtime.lastError.message
+                    );
+                    showErrorNotification();
+                }
+            }
+        )
     });
 }
